@@ -1,68 +1,38 @@
+using System.Collections;
+
 namespace FullAot.DataItems;
 
-public class Relation(Schema schema)
+public class Relation(Schema schema) : IEnumerable<Tuple>
 {
-    public Schema Schema { get; } = schema;
+    public Schema Schema { get; set; } = schema;
 
-    private readonly List<Tuple> _tuples = new();
+    private readonly HashSet<Tuple> _tuples = new();
 
-    public void Insert(params object?[] values)
+    public Relation(Schema schema, IEnumerable<Tuple> tuples) : this(schema)
     {
-        Validate(values);
-        _tuples.Add(new Tuple(values));
+        _tuples = [.. tuples]; //Meine IDE (Rider) hat mir das vorgeschlagen, offen gestanden ich kenne die Syntax nicht, sieht aber schick aus.
     }
 
+    public void Insert(Tuple values)
+    {
+        _tuples.Add(values);
+    }
+    
+    public IReadOnlyCollection<Tuple> Tuples => _tuples;
+    
+    public int Count => _tuples.Count;
     public object? Get(Tuple t, string column)
     {
         return t[Schema.IndexOf(column)];
     }
-    
-    private void Validate(object?[] values)
-    {
-        if (values.Length != Schema.Count)
-            throw new ArgumentException("Falsche Anzahl an Werten.");
 
-        for (int i = 0; i < values.Length; i++)
-        {
-            var col = Schema[i];
-            if (values[i] is null)
-            {
-                throw new ArgumentException($"{col.Name} darf nicht NULL sein.");
-            }
-            if (!TypeMatches(col.Type, values[i]!))
-                throw new ArgumentException($"Falscher Typ für {col.Name}.");
-        }
+    public IEnumerator<Tuple> GetEnumerator()
+    {
+        return  _tuples.GetEnumerator();
     }
 
-    private static bool TypeMatches(DataType type, object value)
+    IEnumerator IEnumerable.GetEnumerator()
     {
-        switch (type)
-        {
-            case DataType.Bool:
-            {
-                return value is bool;
-            }
-            case DataType.String:
-            {
-                return value is string;
-            }
-            case DataType.Long:
-            {
-                return value is long;
-            }
-            case DataType.DateTime:
-            {
-                return value is DateTime;
-            }
-            case DataType.Double:
-            {
-                return value is double;
-            }
-            case DataType.Int:
-            {
-                return value is int;
-            }
-        }
-        return false;
+        return GetEnumerator();
     }
 }

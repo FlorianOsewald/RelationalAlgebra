@@ -13,11 +13,13 @@ public static class RelExpExtensions
     public static RelationalExpression Without(this RelationalExpression l, RelationalExpression r)
         => new Difference(l, r);
     
-    public static RelationalExpression Join(this RelationalExpression l, RelationalExpression r, Predicate on)
+    public static RelationalExpression Join(this RelationalExpression l, RelationalExpression r, IEnumerable<(string leftCol, string rightCol)> on)
+        => new Join(l, r, on);
+    public static RelationalExpression Join(this RelationalExpression l, RelationalExpression r, IEnumerable<string> on)
         => new Join(l, r, on);
 
     public static RelationalExpression NaturalJoin(this RelationalExpression l, RelationalExpression r)
-        => new Join(l, r, null);
+        => new Join(l, r);
 
     public static RelationalExpression Project(this RelationalExpression input, IReadOnlyList<ProjectionItem> items)
         => new Projection(input, items);
