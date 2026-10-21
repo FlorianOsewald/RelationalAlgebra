@@ -1,3 +1,4 @@
+using FullAot.DataItems;
 using Tuple = FullAot.DataItems.Tuple;
 
 namespace FullAot.Expressions.ScalarExpressions.Predicates;
@@ -6,9 +7,16 @@ public class And(Predicate left, Predicate right) : Predicate
 {
     private Predicate Left { get; } = left;
     private Predicate Right { get; } = right;
+    
 
-    public override bool Evaluate(Tuple context)
+    public override object? Evaluate(Tuple context)
     {
-        return Left.Evaluate(context) && Right.Evaluate(context);
+        return (bool) Left.Evaluate(context) && (bool) Right.Evaluate(context);
+    }
+
+    public override void Bind(Schema schema)
+    {
+        Left.Bind(schema);
+        Right.Bind(schema);
     }
 }

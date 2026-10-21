@@ -1,42 +1,67 @@
 using System.Numerics;
+using FullAot.DataItems;
+using FullAot.Util;
 using Tuple = FullAot.DataItems.Tuple;
+using static FullAot.Util.DataTypeExtensions;
 
 namespace FullAot.Expressions.ScalarExpressions;
 
 //Binary Ops repraesentieren meinen Ansatz sowas wie \pi_{A<-B+C} moeglichst generisch zu modellieren
-public class BinaryOp<T>(
-    Op @operator,
-    ScalarExpression<T> left,
-    ScalarExpression<T> right)
-    : ScalarExpression<T>
-    where T : INumber<T>
+public class BinaryOp(Op @operator, ScalarExpression left, ScalarExpression right) : ScalarExpression
 {
+    private ScalarExpression _right = right;
+    private ScalarExpression _left = left;
     private Op Operator { get; } = @operator;
-    private ScalarExpression<T> Left { get; } = left;
-    private ScalarExpression<T> Right { get; } = right;
+    private ScalarExpression Left { get; set; } = left;
+    private ScalarExpression Right { get; set; } = right;
 
-    public override T Evaluate(Tuple context)
+    public override DataType ResultType { get; set; }
+
+    public override object? Evaluate(Tuple context)
     {
-        switch (Operator)
+        var left = Left.Evaluate(context);
+        var right = Right.Evaluate(context);
+        switch (ResultType)
         {
-            case Op.Add:
+            case DataType.Int:
             {
-                return Left.Evaluate(context) + Right.Evaluate(context);
+                return Apply<int>((int)left, (int)right);
             }
-            case Op.Sub:
+            case DataType.Double:
             {
-                return Left.Evaluate(context) - Right.Evaluate(context);
+                return Apply<double>((double)left, (double)right);
             }
-            case Op.Mul:
+
+            case DataType.Long:
             {
-                return Left.Evaluate(context) * Right.Evaluate(context);
-            }
-            case Op.Div:
-            {
-                return Left.Evaluate(context) / Right.Evaluate(context);
+                return Apply<long>((long)left, (long)right);
             }
         }
-        return default(T);
+        throw  new InvalidOperationException($"Operator {Operator} not defined for {Left.ResultType} and {Right.ResultType}");
+    }
+
+    public override void Bind(Schema schema)
+    {
+        Left.Bind(schema);
+        Right.Bind(schema);
+
+        ResultType = TypeCoalescence.Coalesce(ref _left, ref _right);
+    }
+
+    private object Apply<T>(T a, T b) where T : INumber<T>
+    {
+        switch(Operator){
+            case Op.Add:
+                return a + b;
+            case Op.Sub:
+                return a - b;
+            case Op.Mul:
+                return a * b;
+            case Op.Div:
+                return a / b;
+        }
+
+        throw new InvalidOperationException($"Operation {Operator} not supported");
     }
 }
 

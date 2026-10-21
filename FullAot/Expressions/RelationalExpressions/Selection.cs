@@ -12,9 +12,10 @@ public class Selection(RelationalExpression input, Predicate condition) : UnaryE
         //evaluate child, then return a relation that contains all tuples where the Condition evaluates to true
         var relation = Input.Evaluate();
         var retRelation = new Relation(relation.Schema); //On Selection Schema stays the same compared to the input
+        Condition.Bind(relation.Schema); //new: Bind the condition to the current schema before evaluate
         foreach (var tuple in relation)
         {
-            if (Condition.Evaluate(tuple))
+            if ((bool)Condition.Evaluate(tuple))
             {
                 retRelation.Insert(tuple);
             }

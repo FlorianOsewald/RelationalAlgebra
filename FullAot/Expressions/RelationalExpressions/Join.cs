@@ -44,18 +44,18 @@ public class Join : BinaryExpression
         //aber fuers erste lass' ich das monster hier mal stehen und schau demnaechst nochmal mit einem frischen Auge drauf
         return cLeft.Type switch
         {
-            DataType.String => new Eq<string>(new ColumnReference<string>(cLeft.Name, left),
-                new ColumnReference<string>(cRight.Name, right)),
-            DataType.Bool => new Eq<bool>(new ColumnReference<bool>(cLeft.Name, left),
-                new ColumnReference<bool>(cRight.Name, right)),
-            DataType.DateTime => new Eq<DateTime>(new ColumnReference<DateTime>(cLeft.Name, left),
-                new ColumnReference<DateTime>(cRight.Name, right)),
-            DataType.Double => new Eq<double>(new ColumnReference<double>(cLeft.Name, left),
-                new ColumnReference<double>(cRight.Name, right)),
-            DataType.Int => new Eq<int>(new ColumnReference<int>(cLeft.Name, left),
-                new ColumnReference<int>(cRight.Name, right)),
-            DataType.Long => new Eq<long>(new ColumnReference<long>(cLeft.Name, left),
-                new ColumnReference<long>(cRight.Name, right)),
+            DataType.String => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
+            DataType.Bool => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
+            DataType.DateTime => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
+            DataType.Double => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
+            DataType.Int => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
+            DataType.Long => new Eq(new ColumnReference(cLeft.Name),
+                new ColumnReference(cRight.Name)),
             _ => throw new ArgumentException($"Column type {cLeft.Type} not supported")
         };
     }
