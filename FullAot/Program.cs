@@ -12,11 +12,21 @@ Console.WriteLine("Hello, World!");
 //Bsp: 
 //Fluent-API Beispiele
 var f_x = Lit(5).Eq(5);
+f_x.Bind(null);
 Console.WriteLine(f_x.Evaluate(null));
 
 var f_y = Lit(5).Eq(5) .And(Lit(7.0).Gt(5.1));
-
+f_y.Bind(null);
 Console.WriteLine(f_y.Evaluate(null));
+
+//kleiner test ob jetzt auch ints und doubles verglichen werden können was einer der erhofften benefits von meinem rewrite war
+var f_z = Lit(5).Eq(5) .And(Lit(7.0).Gt(5));
+f_z.Bind(null);
+Console.WriteLine(f_z.Evaluate(null));
+
+var f_add = new BinaryOp(Op.Add, 5, 6.1);
+f_add.Bind(null);
+Console.WriteLine(f_add.Evaluate(null));
 
 //schema test
 Console.WriteLine("Schema Test");

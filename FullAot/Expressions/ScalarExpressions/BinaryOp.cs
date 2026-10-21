@@ -12,15 +12,15 @@ public class BinaryOp(Op @operator, ScalarExpression left, ScalarExpression righ
     private ScalarExpression _right = right;
     private ScalarExpression _left = left;
     private Op Operator { get; } = @operator;
-    private ScalarExpression Left { get; set; } = left;
-    private ScalarExpression Right { get; set; } = right;
+ //   private ScalarExpression Left { get; set; } = left;
+  //  private ScalarExpression Right { get; set; } = right;
 
     public override DataType ResultType { get; set; }
 
     public override object? Evaluate(Tuple context)
     {
-        var left = Left.Evaluate(context);
-        var right = Right.Evaluate(context);
+        var left = _left.Evaluate(context);
+        var right = _right.Evaluate(context);
         switch (ResultType)
         {
             case DataType.Int:
@@ -37,13 +37,13 @@ public class BinaryOp(Op @operator, ScalarExpression left, ScalarExpression righ
                 return Apply<long>((long)left, (long)right);
             }
         }
-        throw  new InvalidOperationException($"Operator {Operator} not defined for {Left.ResultType} and {Right.ResultType}");
+        throw  new InvalidOperationException($"Operator {Operator} not defined for {_left.ResultType} and {_right.ResultType}");
     }
 
     public override void Bind(Schema schema)
     {
-        Left.Bind(schema);
-        Right.Bind(schema);
+        _left.Bind(schema);
+        _right.Bind(schema);
 
         ResultType = TypeCoalescence.Coalesce(ref _left, ref _right);
     }

@@ -9,14 +9,15 @@ public class Gt(ScalarExpression left, ScalarExpression right, bool allowEqualit
 {
     private ScalarExpression _right = right;
     private ScalarExpression _left = left;
-    private ScalarExpression Left { get;  } = left;
-    private ScalarExpression Right { get; } = right;
+   // private ScalarExpression Left { get;  } = left;
+   
+   //private ScalarExpression Right { get; } = right;
     private bool AllowEquality { get;  } = allowEquality;
     
     public override object? Evaluate(Tuple context)
     {
-        var l = Left.Evaluate(context);
-        var r = Right.Evaluate(context);
+        var l = _left.Evaluate(context);
+        var r = _right.Evaluate(context);
         var comp = ((IComparable)l).CompareTo(r);
         if (AllowEquality)
             return comp >= 0;
@@ -25,8 +26,8 @@ public class Gt(ScalarExpression left, ScalarExpression right, bool allowEqualit
 
     public override void Bind(Schema schema)
     {
-        Left.Bind(schema);
-        Right.Bind(schema);
+        _left.Bind(schema);
+        _right.Bind(schema);
         ResultType = DataType.Bool;
         TypeCoalescence.Coalesce(ref _left, ref _right);
     }
