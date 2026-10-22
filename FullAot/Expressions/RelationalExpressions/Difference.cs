@@ -2,8 +2,15 @@ using FullAot.DataItems;
 
 namespace FullAot.Expressions.RelationalExpressions;
 
-public class Difference(RelationalExpression left, RelationalExpression right) : BinaryExpression(left, right)
+public class Difference : BinaryExpression
 {
+    public Difference(RelationalExpression left, RelationalExpression right) : base(left, right)
+    {
+        this.OutputSchema = left.OutputSchema;
+    }
+
+    public override Schema OutputSchema { get; }
+
     public override Relation Evaluate()
     {
         //evaluate both children, then return a relation that only consists of tuples that are in left but not right

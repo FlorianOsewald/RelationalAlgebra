@@ -13,6 +13,10 @@ public class Relation(Schema schema) : IEnumerable<Tuple>
         _tuples = [.. tuples]; //Meine IDE (Rider) hat mir das vorgeschlagen, offen gestanden ich kenne die Syntax nicht, sieht aber schick aus.
     }
 
+    public void Insert(object[] values)
+    {
+        _tuples.Add(new Tuple(values, Schema));
+    }
     public void Insert(Tuple values)
     {
         _tuples.Add(values);

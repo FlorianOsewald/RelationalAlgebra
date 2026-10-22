@@ -1,17 +1,52 @@
 using FullAot.DataItems;
 using FullAot.Expressions.ScalarExpressions;
 using FullAot.Expressions.ScalarExpressions.Predicates;
+using Tuple = FullAot.DataItems.Tuple;
 
 namespace FullAot.Expressions.RelationalExpressions;
 
 public class Join : BinaryExpression
 {
-    private IEnumerable<(string col_left, string col_right)> JoinMap { get; }
+    private readonly Predicate _on;
+    private readonly int[] _rightKeep;
+    public override Schema OutputSchema { get; }
+
     public Join(RelationalExpression left, RelationalExpression right, IEnumerable<(string col_left, string col_right)> map) : base(left, right)
     {
-        //Das problem ist wirklich, dass das Predicate in meinem aktuellen Design lediglich zur Laufzeit evaluiert werden kann
-        //Das waere kein großes issue, aber mein context-system erfordert hier eine klare Trennung
-        //ansonsten muesste ich ad-hoc das Schema mutieren und das ist ein komplett anderer Berg
+        OutputSchema = left.OutputSchema.Join(right.OutputSchema);
+
+        if (map.Count() == 0)
+        {
+            //keine Elemente uebergeben, ein natural join ist also requested
+            //dieser geht ueber alle attribute deren column (name + type) identisch ist in beiden Relationen
+            var intersectSchema = left.OutputSchema.Intersect(right.OutputSchema);
+            foreach (var col in intersectSchema.Columns)
+            {
+                map.Append((col.Name, col.Name));
+            }
+        }
+        
+        //Problem geloest, ich binde das Predicate einfach an ein garantiertes Schema
+        Predicate joinPredicate = new Eq(new ColumnReference( $"l.{map.ElementAt(0).col_left}"),
+            new ColumnReference($"r.{map.ElementAt(0).col_right}"));
+
+        for (int i = 1; i < map.Count(); i++)
+        {
+            Predicate brother = new Eq(new ColumnReference( $"l.{map.ElementAt(i).col_left}"),
+                new ColumnReference($"r.{map.ElementAt(i).col_right}"));
+            joinPredicate = new And(joinPredicate, brother);
+        }
+        _on = joinPredicate;
+        //Erstelle temp join-schema und binde predicate daran
+        var joinSchema = Left.OutputSchema.Combine(Right.OutputSchema);
+        _on.Bind(joinSchema);
+        //Erstelle ein schnelles Lookup array welche index von rechts behalten werden sollen nach dem join
+        var exceptSchema = Right.OutputSchema.Except(Left.OutputSchema);
+        _rightKeep = new int[exceptSchema.Count];
+        for (int i = 0; i < exceptSchema.Count; i++)
+        {
+            _rightKeep[i] = exceptSchema.IndexOf(exceptSchema[i].Name);
+        }
     }
 
     public Join(RelationalExpression left, RelationalExpression right, IEnumerable<string> columns) : this(left, right, columns.Select(c => (c,c)))
@@ -22,84 +57,48 @@ public class Join : BinaryExpression
     {
     }
 
-    public static Predicate BuildJoinPredicate(Relation left, Relation right, IEnumerable<(string col_left, string col_right)> joinMap)
-    {
-        Predicate joinPredicate = BuildEqPredicate(left.Schema, right.Schema, joinMap.ElementAt(0));
-
-        for (int i = 1; i < joinMap.Count(); i++)
-        {
-            Predicate brother = BuildEqPredicate(left.Schema, right.Schema, joinMap.ElementAt(i));
-            joinPredicate = new And(joinPredicate, brother);
-        }
-        
-        return joinPredicate;
-    }
-
-    public static Predicate BuildEqPredicate(Schema left, Schema right, (string col_left, string col_right) map)
-    {
-        var cLeft = left[left.IndexOf(map.col_left)];
-        var cRight = right[right.IndexOf(map.col_right)];
-        if (cLeft.Type != cRight.Type) throw new InvalidOperationException("Operand-Types do not match");
-        //Ich find' das echt nicht nice, aber mir faellt gerade nichts anderes ein. Ich denke eher, dass mein Design hier eine Schwachstelle hat
-        //aber fuers erste lass' ich das monster hier mal stehen und schau demnaechst nochmal mit einem frischen Auge drauf
-        return cLeft.Type switch
-        {
-            DataType.String => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            DataType.Bool => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            DataType.DateTime => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            DataType.Double => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            DataType.Int => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            DataType.Long => new Eq(new ColumnReference(cLeft.Name),
-                new ColumnReference(cRight.Name)),
-            _ => throw new ArgumentException($"Column type {cLeft.Type} not supported")
-        };
-    }
-
-
     public override Relation Evaluate()
     {
         //Evaluate both children, then return a relation that contains all attributes referenced in On (or a natural join)
         var left = Left.Evaluate();
         var right = Right.Evaluate();
-        //TODO
-        //check if JoinMap is actually empty or null and if so build a list that resembles a NaturalJoin
-        var predicate = BuildJoinPredicate(left, right, JoinMap);
-        //build the resulting Schema after join
-        //Aaaaand i am fucked.... predicate still only takes _one_ context, but i actually would have to supply two contexts lol
-        
-        //alright, es ist diverse Stunden spaeter und ich hab immer noch keine Loesung.
-        //aktuell versuche ich im Kopf folgendes umzusetzen: 
-        //Gebe ein gemeinsames Tuple an Predicate.Evaluate
-        //Dafür muss aber das column mapping angepasst werden UND es müssten alle columns prefixed werden. 
-        //Und nach dem prefixen müssen die mappings _nochmal_ angepasst werden. 
-        
         /*
-         * Der Ablauf wäre dann also:
-         * 1) Evaluate left und right
-         * 2) Erstelle das endgültige Schema post join via Left.Schema + Right.Schema
-         * 3) Iterate über alle Columns in Left.Schema -> Prefixe Names mit "src."
-         * 4) Iterate über alle Columns in Right.Schema -> Prefixe Names mit "dst."
-         * 5) Iterate über alle items in JoinMap prefixe col_left mit "src." und col_right mit "dst."
-         * 6) Bilde den Predicate Tree aus JoinMap
-         * 7) Für jeden Tuple in Links:
-         *      a) Iterate über jeden Tuple in Rechts:
-         *          - Erstelle gemeinsamen Tuple indem rechts an links appended wird
-         *          - Predicate.Evaluate(tuple) -> If True füge neuer Relation hinzu
-         * 8) Vergleiche finales Schema aus 2) mit dem Schema der neuen Relation
-         *      - baue tuple basierend auf dem finalen schema aus 2) und cherry pick objects aus den tuplen der neuen relation
-         *      - nacheinander bauen und einfügen um duplikate zu vermeiden
-         * 9) Gebe die mittlerweile 4. in-memory erstellte Relation zurück
+         * Ablauf (nach neuestem Stand)
+         * Erstelle ein gemeinsames schema fuer links + rechts
+         * Binde das On-Predicate an das erstellte Schema
+         * nested-for-loops ueber linke tuple + rechte tuple
+         * erstelle tuple und evaluate predicate auf diesem tuple
+         * wenn condition matched, bau den echten tuple und fuege in die return relation hinzu
          */
-        
-        /*
-         * Honestly, da muss es einen _WESENTLICH_ besseren ansatz geben. Es kann nicht angehen, dass ich hier O(4*n*m) produzieren muss
-         * und nicht mal die Funktionalität einer _normalen_ Datenbank abbilden kann. 
-         */
-        throw new NotImplementedException();
+        var retRelation = new Relation(OutputSchema);
+        foreach (var tupleLeft in left)
+        {
+            var combinedTuple = new Object[left.Schema.Count + right.Schema.Count];
+            Array.Copy(tupleLeft.Values, 0, combinedTuple, 0, left.Schema.Count);
+            foreach (var tupleRight in right)
+            {
+                Array.Copy(tupleRight.Values, 0, combinedTuple, left.Schema.Count, right.Schema.Count);
+                if (_on.Evaluate(new Tuple(combinedTuple)) is true)
+                {
+                    //baue den korrekten tuple
+                    var outTupleValues = new Object[OutputSchema.Count];
+                    //nehme alles von links
+                    Array.Copy(tupleLeft.Values, 0, outTupleValues, 0, left.Schema.Count);
+                    //nehme nur von rechts was neu ist
+                    for (int i = 0; i < _rightKeep.Length; i++)
+                    {
+                        outTupleValues[i + left.Schema.Count] = tupleRight[_rightKeep[i]];
+                    }
+                    //insert den Tuple in retRelation
+                    retRelation.Insert(new Tuple(outTupleValues));
+                }
+                else
+                {
+                    //Predicate was not evaluated to true -> spring zum naechsten Tuple
+                    continue;
+                }
+            }
+        }
+        return retRelation;
     }
 }

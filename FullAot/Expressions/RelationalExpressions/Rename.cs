@@ -1,35 +1,40 @@
 using FullAot.DataItems;
+using FullAot.Items;
 
 namespace FullAot.Expressions.RelationalExpressions;
 
-public class Rename(RelationalExpression input, IReadOnlyList<(string From, string To)> map) : UnaryExpression(input)
+public class Rename : UnaryExpression
 {
-    public IReadOnlyList<(string From, string To)> Map { get; set; } = map;
-
-    public override Relation Evaluate()
+    public Rename(RelationalExpression input, IReadOnlyList<RenameItem> map) : base(input)
     {
-        //evaluate child, then return a relation that contains the renamed columns
-        var rel = Input.Evaluate();
-        //Wir müssen hier eigentlich 'nur' das schema aendern. 
-        var oldSchema = rel.Schema;
+        Map = map;
+        var oldSchema = input.OutputSchema;
         var newCols = new List<Column>();
         foreach (var col in oldSchema.Columns)
         {
-            var renameTuple = map.FirstOrDefault(x => x.From == col.Name);
-            if (renameTuple == default)
+            var renameObj = Map.FirstOrDefault(x => x.InName == col.Name);
+            if (renameObj == default)
             {
                 newCols.Add(col);
             }
             else
             {
-                newCols.Add(new Column(renameTuple.To, col.Type));
+                newCols.Add(new Column(renameObj.OutName, col.Type));
             }
         }
+        OutputSchema = new Schema(newCols);
+    }
 
-        var newSchema = new Schema(newCols);
-        //rel.Schema = newSchema;
-        //Ich habe mich entschieden, dass eigentlich alles immutable sein sollte, also kein lazy weg mehr
-        var retRel = new Relation(newSchema, rel.Tuples);
+    public IReadOnlyList<RenameItem> Map { get; }
+
+    public override Schema OutputSchema { get; }
+
+    public override Relation Evaluate()
+    {
+        //evaluate child, then return a relation that contains the renamed columns
+        var rel = Input.Evaluate();
+        //code wurde nochmal einfacher hier, da wir das fertige Schema bereits kennen dank der implementation von OutputSchema
+        var retRel = new Relation(OutputSchema, rel.Tuples);
         return retRel;
     }
 }

@@ -6,6 +6,8 @@ namespace FullAot.Expressions.RelationalExpressions;
 public class RelationReference(Relation rel) : RelationalExpression
 {
     private Relation Relation { get; } = rel;
+    public override Schema OutputSchema => Relation.Schema;
+
     public override Relation Evaluate()
     {
         return Relation;

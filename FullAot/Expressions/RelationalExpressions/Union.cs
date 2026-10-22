@@ -3,8 +3,19 @@ using Tuple = FullAot.DataItems.Tuple;
 
 namespace FullAot.Expressions.RelationalExpressions;
 
-public class Union(RelationalExpression left, RelationalExpression right) : BinaryExpression(left, right)
+public class Union : BinaryExpression
 {
+    public Union(RelationalExpression left, RelationalExpression right) : base(left, right)
+    {
+        OutputSchema = left.OutputSchema; //Schemas don't 'change' in Union, eventuell die Reihenfole, aber Links ist korrektes Maß
+        if (!left.OutputSchema.IsCompatibleWith(right.OutputSchema))
+        {
+            throw new InvalidOperationException("schema Left and schema Right are not compatible for Union");
+        }
+    }
+
+    public override Schema OutputSchema { get; }
+
     public override Relation Evaluate()
     {
         //Evaluate both children, then return a relation that contains all tuples of both children
@@ -15,12 +26,8 @@ public class Union(RelationalExpression left, RelationalExpression right) : Bina
         //SequenceEqual reicht aber zumindest fuer das erste aus. 
         var left = Left.Evaluate();
         var right = Right.Evaluate();
-        //check hier ob die Schemas kompatible sind
-        if (!left.Schema.IsCompatibleWith(right.Schema))
-        {
-            throw new InvalidOperationException("schema Left and schema Right are not compatible for Union");
-        }
-        var retRel = new Relation(left.Schema, left.Tuples);
+        
+        var retRel = new Relation(OutputSchema, left.Tuples);
 
         if (retRel.Schema.TryGetUnionMapping(right.Schema, out var mapping))
         {
@@ -35,6 +42,7 @@ public class Union(RelationalExpression left, RelationalExpression right) : Bina
                 {
                     tupleVars[i] = t[mapping[i]];
                 }
+                //ich benutze hier den ctor der _keine_ casts macht, einfach aus dem Grund weil die objects hier bereits einen harten typ haben.
                 retRel.Insert(new Tuple(tupleVars));
             }
             return retRel;

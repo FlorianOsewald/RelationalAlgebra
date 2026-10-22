@@ -14,6 +14,8 @@ public class Gt(ScalarExpression left, ScalarExpression right, bool allowEqualit
    //private ScalarExpression Right { get; } = right;
     private bool AllowEquality { get;  } = allowEquality;
     
+    //who calls Bind initially to set off the chain?! -> hab nen bisschen drueber nachgedacht, ich denke Ctor ist der korrekte ort
+    //Das heißt aber auch, dass ich die calls eigentlich nicht mehr chainen muss, aber ich lass das mal drinne 
     public override object? Evaluate(Tuple context)
     {
         var l = _left.Evaluate(context);

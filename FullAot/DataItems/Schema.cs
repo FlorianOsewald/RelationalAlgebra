@@ -36,21 +36,41 @@ public class Schema
         return _normalizedColumns.SequenceEqual(other._normalizedColumns);
     }
 
-    public static Schema operator +(Schema left, Schema right)
+    public Schema Join(Schema right)
     {
-        //this is essentially a join of both Schemas, removing the duplicates
-        var newColumns = new List<Column>(left.Columns);
+        var newColumns = new List<Column>(Columns);
         newColumns.AddRange(right.Columns);
         var unique = newColumns.Distinct();
         return new Schema(unique);
     }
 
-    public static Schema operator -(Schema left, Schema right)
+    public Schema Combine(Schema right)
+    {
+        var newColumns = new List<Column>();
+        foreach (var column in Columns)
+        {
+            newColumns.Add(new Column($"l.{column.Name}", column.Type));
+        }
+        foreach (var column in right.Columns)
+        {
+            newColumns.Add(new Column($"r.{column.Name}", column.Type));
+        }
+        return new Schema(newColumns);
+    }
+
+    public Schema Intersect(Schema right)
     {
         //this returns a Schema that _only_ has columns which are in both schemas
         //could be useful for NaturalJoin?
-        var commonalities = left.Columns.Intersect(right.Columns);
+        var commonalities = Columns.Intersect(right.Columns);
         return new Schema(commonalities);
+    }
+
+    public Schema Except(Schema right)
+    {
+        //returns a Schema that only has comlumns which are in left but _not_ in right
+        var uniqueLeftCols = Columns.Except(right.Columns);
+        return new Schema(uniqueLeftCols);
     }
 
     public bool TryGetUnionMapping(Schema right, out int[] rightToLeft)

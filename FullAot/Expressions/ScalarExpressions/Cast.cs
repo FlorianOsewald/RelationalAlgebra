@@ -17,17 +17,28 @@ public class Cast(ScalarExpression input, DataType target) : ScalarExpression
     {
         var v = input.Evaluate(context);
         if (v is null) return null;
-        return _target switch
+        switch (_target)
         {
-            DataType.Int    => Convert.ToInt32(v),
-            DataType.Long   => Convert.ToInt64(v),
-            DataType.Double => Convert.ToDouble(v),
-            _ => throw new InvalidOperationException($"Cannot cast to {_target}")
-        };
+            case DataType.Int:
+            {
+                return Convert.ToInt32(v);
+            }
+            case DataType.Double:
+            {
+                return Convert.ToDouble(v);
+            }
+            case DataType.Long:
+            {
+                return Convert.ToInt64(v);
+            }
+        }
+
+        throw new InvalidOperationException($"Cannot cast to {_target}");
     }
 
     public override void Bind(Schema schema)
     {
         //nichts zu tun
+        input.Bind(schema);
     }
 }

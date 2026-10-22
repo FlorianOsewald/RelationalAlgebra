@@ -26,6 +26,16 @@ public static class ScExpExtensions
     public static Literal Lit(bool value) => new(value, DataType.Bool);
     public static Literal Lit(string value) => new(value, DataType.String);
     public static Literal Lit(DateTime value) => new(value, DataType.DateTime);
+    
+    public static BinaryOp Add(this ScalarExpression l, ScalarExpression r) 
+        => new BinaryOp(Op.Add, l, r);
+    public static BinaryOp Sub(this ScalarExpression l, ScalarExpression r)
+        => new BinaryOp(Op.Sub, l, r);
+    public static BinaryOp Mul(this ScalarExpression l, ScalarExpression r)
+        => new BinaryOp(Op.Mul, l, r);
+    public static BinaryOp Div(this ScalarExpression l, ScalarExpression r)
+        => new BinaryOp(Op.Div, l, r);
+    public static ColumnReference Col(string name) => new (name);
 
     public static Predicate Not(this Predicate input)
         => new Not(input);
