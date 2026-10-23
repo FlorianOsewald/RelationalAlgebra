@@ -11,6 +11,9 @@ public static class RelExpExtensions
     public static RelationalExpression DivideWith(this RelationalExpression l, RelationalExpression r)
         => new Division(l, r);
     
+    public static RelationalExpression IntersectWith(this RelationalExpression l, RelationalExpression r)
+        => new Intersection(l, r);
+    
     public static RelationalExpression Without(this RelationalExpression l, RelationalExpression r)
         => new Difference(l, r);
     

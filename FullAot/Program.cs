@@ -68,5 +68,44 @@ relation_s.Insert([1,3]);
 relation_s.Insert([2,5]);
 relation_t.Insert([7,2]);
 relation_t.Insert([3,4]);
+Console.WriteLine("Cartesian Product test:");
 Rel(relation_s).X(relation_t).Project([("A","newA"), "B", (Col("C").Add(Col("D")), "C+D")]).Evaluate().Print();
-Console.WriteLine("X test done");
+//R ÷ S  =  π_X(R) − π_X( (π_X(R) × S) − R ) (X is the set of R's attributes that are not in S)
+//π_X(R) -> X S ->  - R -> π_X -> π_X(R) - 
+cols_s = new List<Column>() {new Column("A", DataType.Int), new Column("B", DataType.String)};
+cols_t = new List<Column>() {new Column("B", DataType.String)};
+schema_s = new Schema(cols_s);
+schema_t = new Schema(cols_t);
+relation_s = new Relation(schema_s);
+relation_t = new Relation(schema_t);
+relation_s.Insert([1,"a"]);
+relation_s.Insert([1,"c"]);
+relation_s.Insert([2,"b"]);
+relation_s.Insert([2,"a"]);
+relation_s.Insert([2,"c"]);
+relation_s.Insert([3,"b"]);
+relation_s.Insert([3,"c"]);
+relation_s.Insert([3,"a"]);
+relation_s.Insert([3,"d"]);
+relation_t.Insert(["a"]);
+relation_t.Insert(["c"]);
+
+Console.WriteLine("Composite Division test:");
+Rel(relation_s).Project(["A"]).Without(new Projection(new CartesianProduct(new Projection(relation_s, ["A"]), relation_t).Without(relation_s),["A"])).Evaluate().Print();
+Console.WriteLine("DivideWith Test:");
+Rel(relation_s).DivideWith(relation_t).Evaluate().Print();
+
+cols_s = new List<Column>() {new Column("A", DataType.Int), new Column("B", DataType.String)};
+cols_t = new List<Column>() {new Column("B", DataType.String), new Column("A", DataType.Int)};
+schema_s = new Schema(cols_s);
+schema_t = new Schema(cols_t);
+relation_s = new Relation(schema_s);
+relation_t = new Relation(schema_t);
+relation_s.Insert([1,"a"]);
+relation_s.Insert([1,"c"]);
+relation_t.Insert(["a",1]);
+relation_t.Insert(["c",1]);
+Console.WriteLine("Difference Test");
+Rel(relation_s).Without(relation_t).Evaluate().Print();
+Console.WriteLine("Intersection Test");
+Rel(relation_s).IntersectWith(relation_t).Evaluate().Print();

@@ -1,4 +1,6 @@
 using FullAot.DataItems;
+using FullAot.Util;
+using Tuple = FullAot.DataItems.Tuple;
 
 namespace FullAot.Expressions.RelationalExpressions;
 
@@ -16,19 +18,21 @@ public class Difference : BinaryExpression
         //evaluate both children, then return a relation that only consists of tuples that are in left but not right
         var left = Left.Evaluate();
         var right = Right.Evaluate();
-        if (!left.Schema.Equals(right.Schema))
+        
+        if (!left.Schema.IsCompatibleWith(right.Schema))
         {
             throw new ArgumentException("Schemas do not match, Difference cannot be computed.");
         }
         //Wir sind noch hier, also vom schema her zumindest alles gut
         var retRelation = new Relation(left.Schema);
-        //iterate ueber alle tuple aus left und gucke ob diese in right enthalten sind. Wenn ja, dann continue, wenn nein, dann fuege diesen tuple in retRelation ein
-        //update, die tuple sind nun keine liste mehr sondern ein hashset. Damit gibts viele Sachen wie uniqueness und witzigerweise auch Difference quasi geschenkt. 
+        
+        //Garantiere dass beide Tuples immer gleich aufgebaut sind mit der neuen Extension-method
+        var rightTuplesAligned = right.ReorderToMatch(left);
         foreach (var tuple in left)
         {
-            //Soweit ich das korrekt gelesen habe, bekommt man Contains gratis, weil wir IEnumerable implementiert haben auf der Relation
-            //Unter der Haube sollte das native die Funktion vom HashSet ansprechen
-            if (!right.Contains(tuple))
+            //update: Ich habe gelernt, dass HashSet.Contains() hier tatsächlich positions-aware ist
+            //Das heißt ein Schema <name, id> und <id, name> sind zwar Compatible _aber_ deren Tuple sind nicht identisch. 
+            if (!rightTuplesAligned.Contains(tuple))
             {
                 retRelation.Insert(tuple);
             }
