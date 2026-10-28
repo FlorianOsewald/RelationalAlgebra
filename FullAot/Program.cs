@@ -4,6 +4,7 @@ using FullAot.Expressions.ScalarExpressions;
 using FullAot.Expressions.ScalarExpressions.Predicates;
 using FullAot.FluentExtension;
 using FullAot.Items;
+using FullAot.Tpch;
 using FullAot.Util;
 using static FullAot.FluentExtension.ScExpExtensions;
 using static FullAot.FluentExtension.RelExpExtensions;
@@ -109,3 +110,6 @@ Console.WriteLine("Difference Test");
 Rel(relation_s).Without(relation_t).Evaluate().Print();
 Console.WriteLine("Intersection Test");
 Rel(relation_s).IntersectWith(relation_t).Evaluate().Print();
+
+//tpch test
+Nation.Load().Print();
