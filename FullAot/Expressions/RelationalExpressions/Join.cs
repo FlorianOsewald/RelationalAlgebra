@@ -60,7 +60,12 @@ public class Join : BinaryExpression
 
     public override Relation Evaluate()
     {
-        //soft-todo: diese funktion auslagern in private fkt und die anderen zwei gängigen Join algos implementieren
+        //später: Check die Datenmenge und entscheide dann somewhat dynamisch welchen der Algorithmen am besten für den Join benutzt wird
+        return EvaluateNaive();
+    }
+
+    private Relation EvaluateNaive()
+    {
         //Evaluate both children, then return a relation that contains all attributes referenced in On (or a natural join)
         var left = Left.Evaluate();
         var right = Right.Evaluate();
