@@ -5,6 +5,13 @@ namespace FullAot.Tpch;
 
 public static class Supplier
 {
+    public static readonly string SuppKey = "s_suppkey";
+    public static readonly string Name = "s_name";
+    public static readonly string Address = "s_address";
+    public static readonly string NationKey = "s_nationkey";
+    public static readonly string Phone = "s_phone";
+    public static readonly string AcctBal = "s_acctbal";
+    public static readonly string Comment = "s_comment";
     public static Relation Load()
     {
         //Columns erstellen

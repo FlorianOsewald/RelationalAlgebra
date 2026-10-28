@@ -5,6 +5,10 @@ namespace FullAot.Tpch;
 
 public static class Nation
 {
+    public static readonly string NationKey = "n_nationkey";
+    public static readonly string Name = "n_name";
+    public static readonly string RegionKey = "n_regionkey";
+    public static readonly string Comment = "n_comment";
     public static Relation Load()
     {
         //Columns erstellen

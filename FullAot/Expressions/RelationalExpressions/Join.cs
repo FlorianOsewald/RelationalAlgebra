@@ -13,8 +13,6 @@ public class Join : BinaryExpression
 
     public Join(RelationalExpression left, RelationalExpression right, IEnumerable<(string col_left, string col_right)> map) : base(left, right)
     {
-        OutputSchema = left.OutputSchema.Join(right.OutputSchema);
-
         if (map.Count() == 0)
         {
             //keine Elemente uebergeben, ein natural join ist also requested
@@ -25,6 +23,9 @@ public class Join : BinaryExpression
                 map.Append((col.Name, col.Name));
             }
         }
+
+        var fixedRemovedColumnsFromRight = map.Select(t => t.col_right);
+        OutputSchema = left.OutputSchema.Join(right.OutputSchema, fixedRemovedColumnsFromRight);
         
         //Problem geloest, ich binde das Predicate einfach an ein garantiertes Schema
         Predicate joinPredicate = new Eq(new ColumnReference( $"l.{map.ElementAt(0).col_left}"),
@@ -41,7 +42,7 @@ public class Join : BinaryExpression
         var joinSchema = Left.OutputSchema.Combine(Right.OutputSchema);
         _on.Bind(joinSchema);
         //Erstelle ein schnelles Lookup array welche index von rechts behalten werden sollen nach dem join
-        var exceptSchema = Right.OutputSchema.Except(Left.OutputSchema);
+        var exceptSchema = Right.OutputSchema.Except(Left.OutputSchema, fixedRemovedColumnsFromRight);
         _rightKeep = new int[exceptSchema.Count];
         for (int i = 0; i < exceptSchema.Count; i++)
         {
@@ -59,6 +60,7 @@ public class Join : BinaryExpression
 
     public override Relation Evaluate()
     {
+        //soft-todo: diese funktion auslagern in private fkt und die anderen zwei gängigen Join algos implementieren
         //Evaluate both children, then return a relation that contains all attributes referenced in On (or a natural join)
         var left = Left.Evaluate();
         var right = Right.Evaluate();

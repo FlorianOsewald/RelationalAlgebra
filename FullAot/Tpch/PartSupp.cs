@@ -5,6 +5,11 @@ namespace FullAot.Tpch;
 
 public static class PartSupp
 {
+    public static readonly string PartKey = "ps_partkey";
+    public static readonly string SuppKey = "ps_suppkey";
+    public static readonly string AvailQty = "ps_availqty";
+    public static readonly string SupplyCost = "ps_supplycost";
+    public static readonly string Comment = "ps_comment";
     public static Relation Load()
     {
         //Columns erstellen
@@ -13,7 +18,7 @@ public static class PartSupp
             new ("ps_partkey", DataType.Long),
             new ("ps_suppkey", DataType.Long),
             new ("ps_availqty", DataType.Long),
-            new ("pw_supplycost",  DataType.Double),
+            new ("ps_supplycost",  DataType.Double),
             new ("ps_comment", DataType.String)
         };
         

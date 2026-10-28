@@ -113,3 +113,14 @@ Rel(relation_s).IntersectWith(relation_t).Evaluate().Print();
 
 //tpch test
 Nation.Load().Print();
+var nation = Nation.Load();
+Rel(nation).Where(Col("n_nationkey").Gt(5).And(Col("n_nationkey").Leq(10))).Evaluate().Print();
+var customer = Customer.Load();
+Rel(customer)
+    .Project([(Customer.Name, "Firmenname"), Customer.NationKey, Customer.AcctBal, Customer.CustKey])
+    .Where(Col(Customer.CustKey).Gt(5).And(Col(Customer.CustKey).Leq(10)))
+    .Join(
+        Rel(nation)
+            .Project([Nation.NationKey, Nation.Name]), [(Customer.NationKey, Nation.NationKey)])
+    .Evaluate()
+    .Print(100);

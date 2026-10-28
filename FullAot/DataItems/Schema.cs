@@ -28,7 +28,7 @@ public class Schema
         if(_index.TryGetValue(name, out int index))
             return index;
         
-        throw new KeyNotFoundException("Unbekannte Spalte: {name}");
+        throw new KeyNotFoundException($"Unbekannte Spalte: {name}");
     }
 
     public bool IsCompatibleWith(Schema other)
@@ -36,12 +36,17 @@ public class Schema
         return _normalizedColumns.SequenceEqual(other._normalizedColumns);
     }
 
-    public Schema Join(Schema right)
+    public Schema Join(Schema right, IEnumerable<string> fixedRemoveColumns)
     {
         var newColumns = new List<Column>(Columns);
-        newColumns.AddRange(right.Columns);
+        newColumns.AddRange(right.Columns.Where(c => !fixedRemoveColumns.Contains(c.Name)));
         var unique = newColumns.Distinct();
         return new Schema(unique);
+    }
+
+    public Schema Join(Schema right)
+    {
+        return Join(right, Enumerable.Empty<string>());
     }
 
     public Schema Combine(Schema right)
@@ -68,8 +73,13 @@ public class Schema
 
     public Schema Except(Schema right)
     {
-        //returns a Schema that only has comlumns which are in left but _not_ in right
-        var uniqueLeftCols = Columns.Except(right.Columns);
+        return Except(right, Enumerable.Empty<string>());
+    }
+
+    public Schema Except(Schema right, IEnumerable<string> fixedRemoveColumns)
+    {
+        //returns a Schema that only has comlumns which are in left but _not_ in right and also drops the columns requested
+        var uniqueLeftCols = Columns.Except(right.Columns).Where(c => !fixedRemoveColumns.Contains(c.Name));
         return new Schema(uniqueLeftCols);
     }
 

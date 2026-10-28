@@ -5,6 +5,22 @@ namespace FullAot.Tpch;
 
 public static class LineItem
 {
+    public static readonly string OrderKey = "l_orderkey";
+    public static readonly string PartKey = "l_partkey";
+    public static readonly string SuppKey = "l_suppkey";
+    public static readonly string LineNumber = "l_linenumber";
+    public static readonly string Quantity = "l_quantity";
+    public static readonly string ExtendedPrice = "l_extendedprice";
+    public static readonly string Discount = "l_discount";
+    public static readonly string Tax = "l_tax";
+    public static readonly string ReturnFlag = "l_returnflag";
+    public static readonly string LineStatus = "l_linestatus";
+    public static readonly string ShipDate = "l_shipdate";
+    public static readonly string CommitDate = "l_commitdate";
+    public static readonly string ReceiptDate = "l_receiptdate";
+    public static readonly string Shipinstruct = "l_shipinstruct";
+    public static readonly string ShipMode = "l_shipmode";
+    public static readonly string Comment = "l_comment";
     public static Relation Load()
     {
         //Columns erstellen

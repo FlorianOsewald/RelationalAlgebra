@@ -5,6 +5,14 @@ namespace FullAot.Tpch;
 
 public static class Customer
 {
+    public static readonly string CustKey = "c_custkey";
+    public static readonly string Name = "c_name";
+    public static readonly string Address = "c_address";
+    public static readonly string NationKey = "c_nationkey";
+    public static readonly string Phone = "c_phone";
+    public static readonly string AcctBal = "c_acctbal";
+    public static readonly string MktSegment = "c_mktsegment";
+    public static readonly string Comment = "c_comment";
     public static Relation Load()
     {
         //Columns erstellen
