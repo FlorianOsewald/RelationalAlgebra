@@ -35,6 +35,10 @@ public static class ScExpExtensions
         => new BinaryOp(Op.Mul, l, r);
     public static BinaryOp Div(this ScalarExpression l, ScalarExpression r)
         => new BinaryOp(Op.Div, l, r);
+
+    //keine ahnung warum mir erst jetzt die guten Syntactic sugars einfallen lol
+    public static Predicate Between(this ColumnReference value, ScalarExpression l, ScalarExpression r)
+        => new And(value.Geq(l), value.Leq(r));
     public static ColumnReference Col(string name) => new (name);
 
     public static Predicate Not(this Predicate input)

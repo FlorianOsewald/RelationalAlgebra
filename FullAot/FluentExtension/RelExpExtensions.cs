@@ -24,6 +24,8 @@ public static class RelExpExtensions
 
     public static RelationalExpression NaturalJoin(this RelationalExpression l, RelationalExpression r)
         => new Join(l, r);
+
+    public static RelationReference From(Relation value) => new(value);
     
     public static RelationalExpression X(this RelationalExpression l, RelationalExpression r)
         => new CartesianProduct(l, r);

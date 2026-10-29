@@ -124,3 +124,13 @@ Rel(customer)
             .Project([Nation.NationKey, Nation.Name]), [(Customer.NationKey, Nation.NationKey)])
     .Evaluate()
     .Print(100);
+
+//even more syntactic sugar yay
+From(customer)
+    .Project([(Customer.Name, "Firmenname"), Customer.NationKey, Customer.AcctBal, Customer.CustKey])
+    .Where(Col(Customer.CustKey).Between(5, 10))
+    .Join(
+        Rel(nation)
+            .Project([Nation.NationKey, Nation.Name]), [(Customer.NationKey, Nation.NationKey)])
+    .Evaluate()
+    .Print(100);
